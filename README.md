@@ -1,5 +1,7 @@
 # PVSeRF
-The official repository of our ACM MM 2022 paper: *PVSeRF: Joint Pixel-, Voxel- and Surface-Aligned Radiance Field for Single-Image Novel View Synthesis*, if you find this repository useful, please consider citing our paper:grinning:
+The official repository of our ACM MM 2022 paper: "PVSeRF: Joint Pixel-, Voxel- and Surface-Aligned Radiance Field for Single-Image Novel View Synthesis". 
+
+If you find this repository useful, please consider citing our paper:grinning:
 
 ## Prerequisite
  - [Pytorch](https://pytorch.org/get-started/locally/) (==1.8.0)
@@ -15,7 +17,7 @@ The official repository of our ACM MM 2022 paper: *PVSeRF: Joint Pixel-, Voxel- 
 
  - opencv-python
 
-It is recommended to install this prerequisites using virtual environment:
+It is recommended to install prerequisites using virtual environment:
 
 ```
 # using conda
@@ -65,7 +67,7 @@ python train.py -c configs/pvserf.yaml --trainer.gpus 8 --acc ddp
 --trainer.fast_dev_run    # if setting this to true, the trainer will run a full training cycle (a single train&val iteration)
 ```
 
-### Testing
+## Testing
 You can use the following command to test a trained PVSeRF model:
 ```
 # use 4 GPUs, 4x faster
