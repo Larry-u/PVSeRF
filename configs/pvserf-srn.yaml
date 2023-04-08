@@ -1,0 +1,180 @@
+inherit_from: null
+
+remarks: ''
+remarks_dict: { }
+trainer:
+    fast_dev_run: false
+
+    model: PVSeRFSRN
+    init_type: null # null | normal | xavier | kaiming | orthogonal
+    init_gain: 0.02
+
+    batch_size: 4
+    n_epochs: 1000
+    lr: 1.0e-4
+    no_bbox_step: 300000  # stop bbox sampling after this #iter
+
+#    n_step_stop: 800000  # stop training after this #iter
+    n_step_stop: .inf
+
+    nviews: "1"
+
+    # logging
+    log_interval: 200
+#    limit_val_batches: 0.01  # check N*100% of validation set
+    limit_val_batches: 1.0  # check N*100% of validation set
+    val_check_interval: 1.0
+    check_val_every_n_epoch: 10
+
+    base_dir: './log'
+    rnd_seed: 1234
+    gpus: 1
+    num_workers: 8
+    time_format: '%Y%m%d-%H-%M-%S'
+
+    # checkpointing
+    only_save_topK: false
+    every_n_epochs: 10
+    moniter: val_psnr
+    metric_decimal: 2
+    moniter_mode: max
+
+dataset:
+#    name: NMRGraphX
+    name: SRNGraphxWorld
+    # dataset root path, contains metadata.yml
+    cat_name: cars  # cars | chairs
+    z_near: 0.8
+    z_far: 1.8
+#    cat_name: chairs
+#    z_near: 1.25
+#    z_far: 2.75
+
+    base_path: data/srn_{}/{}_{}
+    image_size: [128, 128] # result image size (resizes if different); None to keep original size
+    world_scale: 1.0
+    ray_batch_size: 128
+
+    # pcloud-aligned related
+    N_points: 2048
+    rot_pc: true
+
+model:
+    # ====== graphx related ======
+    graphx_ckpt: /home/yuxianggang/data1/graphx-conv-weights/srn_chairs_training.pt
+    freeze_graphx: true
+
+    # ====== pcloud-aligned related ======
+    nearest_K: 5
+    use_softmax: false  # use softmax on dist to aggregate feature
+    freeze_pc_encoder: false  # Stop point-feature extractor gradient (freeze weights)
+    pc_encoder_ckpt: null
+
+    # ====== voxel-aligned related ======
+    use_voxel_encoder: true
+    freeze_voxel_encoder: false  # Stop point-feature extractor gradient (freeze weights)
+    vox_encoder_ckpt: /home/yuxianggang/data1/pix2vox-weights/best-ckpt.pth
+    voxel_encoder:
+        name: Pix2VoxF128  # Pix2VoxF (224) | Pix2VoxF64
+        TCONV_USE_BIAS: false
+        latent_size: 63  # channels of voxel raw_features (concat of last layer and gen_voxel)
+        ms_query: true
+        displacment: 0.0722  # 0.035 | 0.0722, displacment used when conducting multiRanges_deepVoxels
+
+    # ====== pixel-aligned related ======
+    # Condition on local encoder
+    use_encoder: true
+
+    # Stop ConvNet gradient (freeze weights)
+    stop_encoder_grad: false
+
+    # Condition also on a global encoder?
+    use_global_encoder: false
+
+    # Use xyz input instead of just z
+    # (didn't ablate)
+    use_xyz: true
+
+    # Canonical space xyz (default view space)
+    canon_xyz: false
+
+    normalize_z: true
+
+    # Positional encoding
+    use_code: true
+    code:
+        num_freqs: 6
+        freq_factor: 1.5
+        include_input: true
+
+    # View directions
+    use_viewdirs: true
+    # Apply pos. enc. to viewdirs?
+    use_code_viewdirs: false
+
+    # MLP architecture
+    mlp_coarse:
+        name: ResMLP
+        n_blocks: 5
+        d_hidden: 512
+        beta: 1.0
+        combine_layer: 3  # Combine after 3rd layer by average
+        use_spade: false
+
+    mlp_fine:
+        name: ResMLP
+        n_blocks: 5
+        d_hidden: 512
+        beta: 1.0
+        combine_layer: 3  # Combine after 3rd layer by average
+        use_spade: false
+
+    # Encoder architecture
+    encoder:
+        type: Spatial  # Spatial | Global
+        backbone: resnet34  # Backbone network. resnet18/resnet34/custom
+        pretrained: true  # Whether to use model weights pretrained on ImageNet (ResNet only)
+        num_layers: 4  # number of resnet layers to use, 1-5
+        use_first_pool: false  # if false, skips first maxpool layer in ResNet
+        norm_type: batch
+        image_scale: 1.0  # whether rescale input image before extract features
+        upsample_interp: bilinear  # Interpolation method for upscaling pix features
+        index_padding: border
+        index_interp: bilinear
+
+
+renderer:
+    ndc: false  # whether convert rays to NDC space
+    n_coarse: 64 # number of coarse (binned uniform) samples
+    n_fine: 32 # number of fine (importance) samples
+
+    # Try using expected depth sample
+    n_fine_depth: 16 # number of expected depth samples
+    depth_std: 0.01  # noise for depth samples
+    noise_std: 0.0  #noise to add to sigma. We do not use it
+    sched: [ ]  # Decay schedule, not used
+    white_bkgd: true # White background color (false : black)
+    eval_batch_size: 100000  # ray batch size for evaluation
+    lindisp: false  # if to use samples linear in disparity instead of distance
+
+loss:
+    # RGB losses coarse/fine
+    rgb:
+        use_l1: false
+        use_uncertainty: false
+
+    rgb_fine:
+        use_l1: false
+        use_uncertainty: false
+
+    # Alpha regularization (disabled in final version)
+    alpha:
+        # lambda_alpha : 0.0001
+        lambda_alpha: 0.0
+        clamp_alpha: 100
+        init_epoch: 5
+
+    # Coarse/fine weighting (nerf : equal)
+    lambda_coarse: 1.0  # loss : lambda_coarse * loss_coarse + loss_fine
+    lambda_fine: 1.0  # loss : lambda_coarse * loss_coarse + loss_fine
+

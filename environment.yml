@@ -1,0 +1,32 @@
+# run: conda env create -f environment.yml
+name: pvserf
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python==3.8
+  - pip
+  - pip:
+      - opencv-python
+      - dotmap
+      - tensorboard
+      - imageio
+      - imageio-ffmpeg
+      - ipdb
+      - lpips
+      - pytorch-lightning==1.4.6
+      - colored_traceback
+      - git+https://github.com/Larry-u/yacs.git
+      - gpustat
+      - q
+      - PyMCubes
+      - trimesh
+  - scipy
+  - numpy
+  - matplotlib
+  - pytorch==1.8.0
+  - torchvision==0.9.0
+  - cudatoolkit==11.1
+  - scikit-image==0.17.2
+  - tqdm
